@@ -19,6 +19,8 @@ import './theme/variables.css';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home'; // ✅ Use the new layout with the menu and main content
+import AdminDashboard from './pages/AdminDashboard'; // Ensure the file exists at this path or update the path
+import AdminLogin from './pages/Admin';
 
 setupIonicReact();
 
@@ -29,6 +31,9 @@ const App: React.FC = () => (
         <Route exact path="/pcreservation" component={Login} />
         <Route exact path="/pcreservation/register" component={Register} />
         <Route path="/pcreservation/app" component={Home} />
+        <Route exact path="/pcreservation/adminlogin" component={AdminLogin} />
+<Route exact path="/pcreservation/admin" component={AdminDashboard} />
+
         <Redirect exact from="/" to="/pcreservation" />
       </IonRouterOutlet>
     </IonReactRouter>

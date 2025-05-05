@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonButtons,
+  IonPage, IonHeader, IonToolbar, IonTitle,
   IonContent, IonButton, IonToast, IonList, IonItem, IonLabel,
-  IonModal, IonInput, IonDatetime, IonTextarea, IonItemDivider,
-  IonIcon, IonPopover, IonListHeader
+  IonModal, IonDatetime, IonTextarea, IonItemDivider,
+  IonButtons, IonIcon, IonPopover, IonListHeader
 } from '@ionic/react';
-import { ellipsisVertical } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
+import { notificationsOutline, ellipsisVertical } from 'ionicons/icons';
 
 const Pcreservation: React.FC = () => {
   const [pcs, setPcs] = useState<any[]>([]);
@@ -18,7 +19,14 @@ const Pcreservation: React.FC = () => {
   const [reason, setReason] = useState('');
   const [startTime, setStartTime] = useState('');
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [popoverEvent, setPopoverEvent] = useState<Event | null>(null);
+
+  const [showPopover, setShowPopover] = useState(false);
+  const [popoverEvent, setPopoverEvent] = useState<MouseEvent | undefined>(undefined);
+
+  const [menuPopoverEvent, setMenuPopoverEvent] = useState<MouseEvent | undefined>();
+  const [showMenuPopover, setShowMenuPopover] = useState(false);
+
+  const history = useHistory();
 
   useEffect(() => {
     fetchUser();
@@ -41,7 +49,6 @@ const Pcreservation: React.FC = () => {
     const { data: reservations } = await supabase.from('reservations').select('pc_id, user_id');
 
     const reservedMap = new Map(reservations?.map(r => [r.pc_id, r.user_id]));
-
     const merged = pcData?.map((pc) => ({
       ...pc,
       isReserved: reservedMap.has(pc.id),
@@ -52,13 +59,20 @@ const Pcreservation: React.FC = () => {
   };
 
   const fetchNotifications = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
-      .eq('read', false);
+      .order('created_at', { ascending: false });
 
-    if (data) setNotifications(data);
+    if (error) {
+      console.error('Fetch error:', error.message);
+    }
+
+    if (data) {
+      console.log('Fetched notifications:', data);
+      setNotifications(data);
+    }
   };
 
   const openModal = (pcId: number) => {
@@ -101,12 +115,10 @@ const Pcreservation: React.FC = () => {
 
     if (!error) {
       setToastMessage('Reservation cancelled.');
-      await supabase.from('notifications').insert([
-        {
-          user_id: userId,
-          message: `You’ve cancelled your reservation for PC #${pcId}.`
-        }
-      ]);
+      await supabase.from('notifications').insert([{
+        user_id: userId,
+        message: `❌ You’ve cancelled your reservation for PC #${pcId}.`
+      }]);
       fetchPCs();
     } else {
       setToastMessage('Cancel failed: ' + error.message);
@@ -117,7 +129,7 @@ const Pcreservation: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/pcreservation";
+    history.replace('/pcreservation');
   };
 
   return (
@@ -126,25 +138,35 @@ const Pcreservation: React.FC = () => {
         <IonToolbar>
           <IonTitle>PC Reservation</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={(e) => setPopoverEvent(e.nativeEvent)}>
+            <IonButton
+              onClick={(e) => {
+                setPopoverEvent(e.nativeEvent);
+                setShowPopover(true);
+              }}
+              style={{ position: 'relative' }}
+            >
+              <IonIcon icon={notificationsOutline} />
+              {notifications.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  width: '8px',
+                  height: '8px',
+                  backgroundColor: 'red',
+                  borderRadius: '50%',
+                }} />
+              )}
+            </IonButton>
+            <IonButton onClick={(e) => {
+              setMenuPopoverEvent(e.nativeEvent);
+              setShowMenuPopover(true);
+            }}>
               <IonIcon icon={ellipsisVertical} />
             </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
-
-      <IonPopover
-        event={popoverEvent}
-        isOpen={!!popoverEvent}
-        onDidDismiss={() => setPopoverEvent(null)}
-      >
-        <IonList>
-        
-          <IonItem button onClick={handleLogout}>
-            Logout
-          </IonItem>
-        </IonList>
-      </IonPopover>
 
       <IonContent className="ion-padding">
         <IonList>
@@ -170,7 +192,7 @@ const Pcreservation: React.FC = () => {
           ))}
         </IonList>
 
-        {/* Modal for Reservation Details */}
+        {/* Reservation Modal */}
         <IonModal isOpen={showModal} onDidDismiss={() => setShowModal(false)}>
           <IonHeader>
             <IonToolbar>
@@ -205,7 +227,7 @@ const Pcreservation: React.FC = () => {
           </IonContent>
         </IonModal>
 
-        {/* Toast for general messages */}
+        {/* Toast */}
         <IonToast
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
@@ -213,25 +235,51 @@ const Pcreservation: React.FC = () => {
           duration={2000}
           color="primary"
         />
+      </IonContent>
 
-        {/* Toasts for Notifications */}
-        {notifications.map((n) => (
-          <IonToast
-            key={n.id}
-            isOpen={true}
-            message={n.message}
-            duration={3000}
-            color="success"
-            onDidDismiss={async () => {
+      {/* Notifications Popover */}
+      <IonPopover
+        event={popoverEvent}
+        isOpen={showPopover}
+        onDidDismiss={() => setShowPopover(false)}
+      >
+        <IonList>
+          <IonListHeader>Notifications</IonListHeader>
+          {notifications.length === 0 && (
+            <IonItem>
+              <IonLabel>No new notifications</IonLabel>
+            </IonItem>
+          )}
+          {notifications.map(n => (
+            <IonItem key={n.id} button onClick={async () => {
               await supabase
                 .from('notifications')
                 .update({ read: true })
                 .eq('id', n.id);
-              setNotifications((prev) => prev.filter((x) => x.id !== n.id));
-            }}
-          />
-        ))}
-      </IonContent>
+              setNotifications(prev => prev.filter(x => x.id !== n.id));
+              setShowPopover(false);
+            }}>
+              <IonLabel>
+                <p>{n.message}</p>
+                <small>{new Date(n.created_at).toLocaleString()}</small>
+              </IonLabel>
+            </IonItem>
+          ))}
+        </IonList>
+      </IonPopover>
+
+      {/* Menu Popover */}
+      <IonPopover
+        event={menuPopoverEvent}
+        isOpen={showMenuPopover}
+        onDidDismiss={() => setShowMenuPopover(false)}
+      >
+        <IonList>
+          <IonItem button onClick={handleLogout}>
+            <IonLabel>Log out</IonLabel>
+          </IonItem>
+        </IonList>
+      </IonPopover>
     </IonPage>
   );
 };

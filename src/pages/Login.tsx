@@ -47,16 +47,33 @@ const Login: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const doLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  
+    if (error || !data.user) {
       setAlertMessage("You're not part of the crew! Check your email and password, matey!");
       setShowAlert(true);
       return;
     }
-
-    setShowSuccessModal(true);
+  
+    // Check if this user is an admin
+    const userId = data.user.id;
+    const { data: adminCheck, error: adminError } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('id', userId)
+      .single();
+  
+    if (adminError) {
+      console.warn('Not an admin:', adminError.message);
+      // Not an admin, go to normal home
+      setShowSuccessModal(true);
+      return;
+    }
+  
+    // Admin detected
+    navigation.push('/pcreservation/admin', 'forward', 'replace');
   };
+  
 
   return (
     <IonPage>
@@ -166,7 +183,6 @@ const Login: React.FC = () => {
         {/* Themed Alert Box */}
         <AlertBox message={alertMessage} isOpen={showAlert} onClose={() => setShowAlert(false)} />
 
-        {/* Pirate-themed Success Modal */}
        {/* Pirate-themed Success Modal */}
        <IonModal isOpen={showSuccessModal} onDidDismiss={() => setShowSuccessModal(false)} className="centered-modal" backdropDismiss={false} showBackdrop={true}>
   <div className="modal-content-box">
