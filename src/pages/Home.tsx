@@ -1,53 +1,57 @@
-import { 
-  IonButton,
-    IonButtons,
-      IonContent, 
-      IonHeader, 
-      IonIcon, 
-      IonLabel, 
-      IonMenuButton, 
-      IonPage, 
-      IonRouterOutlet, 
-      IonTabBar, 
-      IonTabButton, 
-      IonTabs, 
-      IonTitle, 
-      IonToolbar 
-  } from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { Route, Redirect } from 'react-router';
-import Favorites from './home-tabs/Favorites';
-// import Feed from './home-tabs/Feed';
-import { bookOutline, search, star } from 'ionicons/icons';
-import Feed from './home-tabs/Feed';
-  
-  const Home: React.FC = () => {
-     const tabs=[
-      {name:'Feed',tab:'feed',url:'/pcreservation/app/home/feed',icon:bookOutline},
-      {name:'Seach',tab:'search',url:'/pcreservation/app/home/search',icon:search},
-      {name:'Favorites',tab:'favorites',url:'/pcreservation/app/home/favorites',icon:star}
-     ]
-    return (
-      <IonReactRouter>
-        <IonTabs>
-          <IonTabBar slot="bottom">
-          {tabs.map((item, index) => (
-            <IonTabButton key={index} tab={item.tab} href={item.url}>
-              <IonIcon icon={item.icon} />
-              <IonLabel>{item.name}</IonLabel>
-            </IonTabButton>
-          ))}
+import {
+  IonContent,
+  IonHeader,
+  IonMenu,
+  IonPage,
+  IonRouterOutlet,
+  IonSplitPane,
+  IonTitle,
+  IonToolbar,
+  IonList,
+  IonItem,
+  IonLabel
+} from '@ionic/react';
+import { Route, useHistory, Redirect } from 'react-router-dom'; // <- use react-router-dom
+import Pcreservation from '../pages/Pcreservation';
+import { supabase } from '../utils/supabaseClient';
 
-          </IonTabBar>
-          <IonRouterOutlet>
-            <Route exact path="/pcreservation/app/home/feed" render={Feed}/>
-            <Route exact path="/pcreservation/app/home">
-              <Redirect to="/pcreservation/app/home/feed"/>
-            </Route>
-          </IonRouterOutlet>
-        </IonTabs>
-      </IonReactRouter>
-    );
+const Home: React.FC = () => {
+  const history = useHistory();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    history.replace('/pcreservation');
   };
-  
-  export default Home;
+
+  return (
+    <IonSplitPane contentId="main">
+      {/* Side Menu */}
+      <IonMenu contentId="main">
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Menu</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <IonList>
+            <IonItem button onClick={handleLogout}>
+              <IonLabel>Logout</IonLabel>
+            </IonItem>
+          </IonList>
+        </IonContent>
+      </IonMenu>
+
+      {/* Main Content */}
+      <IonPage id="main">
+        <IonRouterOutlet>
+          <Route exact path="/pcreservation/app/home" component={Pcreservation} />
+          <Route exact path="/pcreservation/app">
+            <Redirect to="/pcreservation/app/home" />
+          </Route>
+        </IonRouterOutlet>
+      </IonPage>
+    </IonSplitPane>
+  );
+};
+
+export default Home;
