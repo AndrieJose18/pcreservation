@@ -1,19 +1,8 @@
-import { Redirect, Route } from 'react-router-dom';
-import {
-  IonApp,
-  IonIcon,
-  IonLabel,
-  IonRouterOutlet,
-  IonTabBar,
-  IonTabButton,
-  IonTabs,
-  setupIonicReact
-} from '@ionic/react';
+import { IonApp, IonRouterOutlet, IonSplitPane, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
-import Login from './pages/Login';
-import Reserve from './pages/Reserve';
-import MyReservations from './pages/MyReservations';
+import { Redirect, Route } from 'react-router-dom';
+import Menu from './components/Menu';
+import Page from './pages/Page';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -44,25 +33,27 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import Home from './pages/Home';
 
 setupIonicReact();
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-  <IonTabs>
-    <IonRouterOutlet>
-      <Route exact path="/login" component={Login} />
-      <Route exact path="/home" component={Home} />
-      <Route exact path="/reserve" component={Reserve} />
-      <Route exact path="/my-reservations" component={MyReservations} />
-      <Redirect exact from="/" to="/login" />
-    </IonRouterOutlet>
-  </IonTabs>
-</IonReactRouter>
-
-  </IonApp>
-);
+const App: React.FC = () => {
+  return (
+    <IonApp>
+      <IonReactRouter>
+        <IonSplitPane contentId="main">
+          <Menu />
+          <IonRouterOutlet id="main">
+            <Route path="/" exact={true}>
+              <Redirect to="/folder/Inbox" />
+            </Route>
+            <Route path="/folder/:name" exact={true}>
+              <Page />
+            </Route>
+          </IonRouterOutlet>
+        </IonSplitPane>
+      </IonReactRouter>
+    </IonApp>
+  );
+};
 
 export default App;
