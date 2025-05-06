@@ -11,7 +11,7 @@ import {
 } from '@ionic/react';
 import { useState } from 'react';
 import { supabase } from '../utils/supabaseClient';
-import logo from '../assets/onepiecelogo.jpg';
+import logo from '../assets/lab2.gif';
 
 // Pirate-themed AlertBox
 const AlertBox: React.FC<{ message: string; isOpen: boolean; onClose: () => void }> = ({
@@ -114,7 +114,7 @@ const Login: React.FC = () => {
               marginBottom: '10px',
             }}
           >
-            STRAWHATS LOGIN
+            PC RESERVATION
           </h1>
 
           <div
@@ -175,7 +175,7 @@ const Login: React.FC = () => {
                 fontStyle: 'italic',
               }}
             >
-              Don't have an account? Join the crew!
+              Don't have an account?
             </IonButton>
           </div>
         </div>

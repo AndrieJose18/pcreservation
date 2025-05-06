@@ -124,7 +124,7 @@ const Register: React.FC = () => {
                             <IonButton onClick={handleOpenVerificationModal} expand="block" shape="round" style={{ marginTop: '15px' }}>
                                 Register
                             </IonButton>
-                            <IonButton routerLink="/it35-lab" expand="block" fill="clear" shape="round">
+                            <IonButton routerLink="/pcreservation" expand="block" fill="clear" shape="round">
                                 Already have an account? Sign in
                             </IonButton>
                         </IonCardContent>
