@@ -6,37 +6,11 @@ import {
   IonInput,
   IonInputPasswordToggle,
   IonPage,
-  IonModal,
   useIonRouter,
 } from '@ionic/react';
 import { useState } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import logo from '../assets/lab2.gif';
-
-// Pirate-themed AlertBox
-const AlertBox: React.FC<{ message: string; isOpen: boolean; onClose: () => void }> = ({
-  message,
-  isOpen,
-  onClose,
-}) => {
-  return (
-    <IonAlert
-      isOpen={isOpen}
-      onDidDismiss={onClose}
-      header="🏴‍☠️ Unauthorized Access"
-      subHeader="Straw Hat Pirates"
-      message={message}
-      buttons={[
-        {
-          text: 'Aye, Captain!',
-          role: 'cancel',
-          cssClass: 'alert-button-confirm',
-        },
-      ]}
-      cssClass="pirate-alert"
-    />
-  );
-};
 
 const Login: React.FC = () => {
   const navigation = useIonRouter();
@@ -48,32 +22,29 @@ const Login: React.FC = () => {
 
   const doLogin = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  
+
     if (error || !data.user) {
-      setAlertMessage("You're not part of the crew! Check your email and password, matey!");
+      setAlertMessage('Incorrect email or password.');
       setShowAlert(true);
       return;
     }
-  
-    // Check if this user is an admin
+
     const userId = data.user.id;
     const { data: adminCheck, error: adminError } = await supabase
       .from('admins')
       .select('id')
       .eq('id', userId)
       .single();
-  
+
     if (adminError) {
-      console.warn('Not an admin:', adminError.message);
-      // Not an admin, go to normal home
+      // Not an admin, go to normal user app
       setShowSuccessModal(true);
       return;
     }
-  
+
     // Admin detected
     navigation.push('/pcreservation/admin', 'forward', 'replace');
   };
-  
 
   return (
     <IonPage>
@@ -98,19 +69,16 @@ const Login: React.FC = () => {
             backdropFilter: 'blur(2px)',
           }}
         >
-          <IonAvatar style={{ width: '260px', height: '260px', marginBottom: '15px', border: '4px solid #FFD700' }}>
-            <img alt="One Piece Logo" src={logo} />
+          <IonAvatar style={{ width: '260px', height: '260px', marginBottom: '15px' }}>
+            <img alt="App Logo" src={logo} />
           </IonAvatar>
 
           <h1
             style={{
               textAlign: 'center',
               fontWeight: 'bold',
-              color: '#FFE600',
               fontSize: '2.2rem',
-              textShadow: '3px 3px 6px rgba(0, 0, 0, 0.8)',
-              fontFamily: '"Treasure Map Deadhand", "Georgia", serif',
-              letterSpacing: '2px',
+              color: '#333',
               marginBottom: '10px',
             }}
           >
@@ -119,13 +87,12 @@ const Login: React.FC = () => {
 
           <div
             style={{
-              backgroundColor: 'rgba(255, 253, 208, 0.95)',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
               padding: '25px',
-              borderRadius: '18px',
+              borderRadius: '16px',
               width: '100%',
               maxWidth: '90vw',
-              boxShadow: '0 6px 15px rgba(0, 0, 0, 0.4)',
-              border: '2px solid #8B4513',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
             }}
           >
             <IonInput
@@ -136,10 +103,9 @@ const Login: React.FC = () => {
               placeholder="Enter your email"
               value={email}
               onIonChange={(e) => setEmail(e.detail.value!)}
-              style={{ '--background': '#fff8dc', '--color': '#000' }}
             />
             <IonInput
-              style={{ marginTop: '15px', '--background': '#fff8dc', '--color': '#000' }}
+              style={{ marginTop: '15px' }}
               fill="outline"
               type="password"
               placeholder="Password"
@@ -153,12 +119,10 @@ const Login: React.FC = () => {
               onClick={doLogin}
               expand="block"
               shape="round"
-              color="warning"
+              color="primary"
               style={{
                 marginTop: '20px',
                 fontWeight: 'bold',
-                letterSpacing: '1px',
-                background: 'linear-gradient(to right, #ffcc00, #ff9900)',
               }}
             >
               Login
@@ -169,68 +133,33 @@ const Login: React.FC = () => {
               expand="block"
               fill="clear"
               shape="round"
-              style={{
-                marginTop: '10px',
-                color: '#8B4513',
-                fontStyle: 'italic',
-              }}
+              style={{ marginTop: '10px' }}
             >
               Don't have an account?
             </IonButton>
           </div>
         </div>
 
-        {/* Themed Alert Box */}
-        <AlertBox message={alertMessage} isOpen={showAlert} onClose={() => setShowAlert(false)} />
+        {/* Error Alert */}
+        <IonAlert
+          isOpen={showAlert}
+          onDidDismiss={() => setShowAlert(false)}
+          header="Login Error"
+          message={alertMessage}
+          buttons={['OK']}
+        />
 
-       {/* Pirate-themed Success Modal */}
-       <IonModal isOpen={showSuccessModal} onDidDismiss={() => setShowSuccessModal(false)} className="centered-modal" backdropDismiss={false} showBackdrop={true}>
-  <div className="modal-content-box">
-    <h2
-      style={{
-        fontFamily: '"Treasure Map Deadhand", serif',
-        fontSize: '1.8rem',
-        color: '#8B0000',
-        marginBottom: '10px',
-      }}
-    >
-      ☠️ Welcome aboard, Captain!
-    </h2>
-    <p style={{ fontSize: '1rem', color: '#000' }}>
-      Ye be part of the Straw Hat crew now!
-    </p>
-    <IonButton
-      color="warning"
-      shape="round"
-      expand="block"
-      style={{ marginTop: '20px', fontWeight: 'bold' }}
-      onClick={() => {
-        setShowSuccessModal(false);
-        navigation.push('/pcreservation/app', 'forward', 'replace');
-      }}
-    >
-      Set Sail!
-    </IonButton>
-  </div>
-</IonModal>
-
-
-
-
-        <style>{`
-          .pirate-alert {
-            --background: #fff8dc;
-            --color: #000;
-            --ion-color-primary: #8B4513;
-          }
-          .centered-modal {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-          }
-        `}</style>
+        {/* Success Alert */}
+        <IonAlert
+          isOpen={showSuccessModal}
+          onDidDismiss={() => {
+            setShowSuccessModal(false);
+            navigation.push('/pcreservation/app', 'forward', 'replace');
+          }}
+          header="Welcome!"
+          message="You have successfully logged in."
+          buttons={['Continue']}
+        />
       </IonContent>
     </IonPage>
   );
