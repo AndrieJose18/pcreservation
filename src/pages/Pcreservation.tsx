@@ -84,7 +84,27 @@ const Pcreservation: React.FC = () => {
 
   const submitReservation = async () => {
     if (!userId || !selectedPCId || !startTime || !reason) return;
-
+  
+    // 🔐 Check if the user already has a reservation
+    const { data: existingReservations, error: checkError } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('user_id', userId);
+  
+    if (checkError) {
+      setToastMessage('Failed to check reservations.');
+      setShowToast(true);
+      return;
+    }
+  
+    if (existingReservations && existingReservations.length > 0) {
+      setToastMessage('You already have a reserved PC. Cancel it before reserving a new one.');
+      setShowToast(true);
+      setShowModal(false);
+      return;
+    }
+  
+    // 🚀 Proceed to insert reservation
     const { error } = await supabase
       .from('reservations')
       .insert([{
@@ -93,18 +113,18 @@ const Pcreservation: React.FC = () => {
         reason,
         start_time: startTime
       }]);
-
+  
     if (!error) {
       setToastMessage('PC successfully reserved!');
       fetchPCs();
     } else {
       setToastMessage('Reservation failed: ' + error.message);
     }
-
+  
     setShowToast(true);
     setShowModal(false);
   };
-
+  
   const handleCancel = async (pcId: number) => {
     if (!userId) return;
 
@@ -261,7 +281,8 @@ const Pcreservation: React.FC = () => {
             }}>
               <IonLabel>
                 <p>{n.message}</p>
-                <small>{new Date(n.created_at).toLocaleString()}</small>
+                {/* Display time in Philippine Time */}
+                <small>{new Date(n.created_at).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</small>
               </IonLabel>
             </IonItem>
           ))}
