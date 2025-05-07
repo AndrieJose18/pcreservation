@@ -24,15 +24,20 @@ const AdminDashboard: React.FC = () => {
   const fetchReservations = async () => {
     const { data, error } = await supabase
       .from('reservations')
-      .select('*, pcs(name), user_id');
-    if (data) setReservations(data);
-    else console.error(error);
+      .select('*, pcs(name), user_id, is_approved');
+
+    console.log("Fetched Reservations:", data); // Log fetched data for debugging
+    if (data) {
+      setReservations(data);
+    } else {
+      console.error('Error fetching reservations:', error);
+    }
   };
 
   const sendNotification = async (userId: string) => {
     const { error } = await supabase
       .from('notifications')
-      .insert([{ user_id: userId, message: 'HEY! Your PC reservation be approved! ⚓', is_read: false }]);
+      .insert([{ user_id: userId, message: 'HEY! Your PC reservation is approved! ⚓', is_read: false }]);
 
     if (!error) {
       setToastMessage('Notification sent successfully.');
@@ -43,8 +48,25 @@ const AdminDashboard: React.FC = () => {
     setShowToast(true);
   };
 
-  const handleApprove = async (userId: string) => {
+  const handleApprove = async (reservationId: string, userId: string) => {
+    // Update the reservation to approved in the database
+    const { data, error } = await supabase
+      .from('reservations')
+      .update({ is_approved: true })
+      .eq('id', reservationId)
+      .select(); // Add select here to get updated data
+
+    if (error) {
+      console.error('Failed to approve reservation:', error);
+      setToastMessage('Failed to approve reservation.');
+      setShowToast(true);
+      return;
+    }
+
+    console.log('Updated reservation:', data); // Log the updated reservation
     await sendNotification(userId);
+
+    // Refetch reservations to reflect the updated data
     await fetchReservations();
   };
 
@@ -80,8 +102,13 @@ const AdminDashboard: React.FC = () => {
                 <p><strong>Reason:</strong> {res.reason}</p>
                 <p><strong>Start Time:</strong> {new Date(res.start_time).toLocaleString()}</p>
               </IonLabel>
-              <IonButton color="success" slot="end" onClick={() => handleApprove(res.user_id)}>
-                Approve & Notify
+              <IonButton
+                color="success"
+                slot="end"
+                onClick={() => handleApprove(res.id, res.user_id)}
+                disabled={res.is_approved} // Disable the button if already approved
+              >
+                {res.is_approved ? 'Approved' : 'Approve & Notify'}
               </IonButton>
             </IonItem>
           ))}
