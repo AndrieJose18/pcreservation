@@ -1,16 +1,20 @@
-// src/pages/AdminDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle,
-  IonContent, IonList, IonItem, IonLabel, IonButton, IonToast
+  IonContent, IonList, IonItem, IonLabel, IonButton, IonToast,
+  IonButtons, IonIcon, IonPopover, IonListHeader
 } from '@ionic/react';
 import { useIonRouter } from '@ionic/react';
+import { ellipsisVertical } from 'ionicons/icons';
 import { supabase } from '../utils/supabaseClient';
 
 const AdminDashboard: React.FC = () => {
   const [reservations, setReservations] = useState<any[]>([]);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [showPopover, setShowPopover] = useState(false);
+  const [popoverEvent, setPopoverEvent] = useState<MouseEvent | undefined>();
+
   const router = useIonRouter();
 
   useEffect(() => {
@@ -41,7 +45,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleApprove = async (userId: string) => {
     await sendNotification(userId);
-    await fetchReservations(); // Optional: refresh list
+    await fetchReservations();
   };
 
   const logout = async () => {
@@ -54,11 +58,17 @@ const AdminDashboard: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonTitle>Admin Dashboard</IonTitle>
-          <IonButton slot="end" color="danger" onClick={logout}>
-            Log Out
-          </IonButton>
+          <IonButtons slot="end">
+            <IonButton fill="clear" onClick={(e) => {
+              setPopoverEvent(e.nativeEvent);
+              setShowPopover(true);
+            }}>
+              <IonIcon icon={ellipsisVertical} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
+
       <IonContent className="ion-padding">
         <h2>All Reservations</h2>
         <IonList>
@@ -83,6 +93,18 @@ const AdminDashboard: React.FC = () => {
           duration={2000}
           onDidDismiss={() => setShowToast(false)}
         />
+
+        <IonPopover
+          isOpen={showPopover}
+          event={popoverEvent}
+          onDidDismiss={() => setShowPopover(false)}
+        >
+          <IonList>
+            <IonItem button onClick={logout}>
+              <IonLabel>Log Out</IonLabel>
+            </IonItem>
+          </IonList>
+        </IonPopover>
       </IonContent>
     </IonPage>
   );
