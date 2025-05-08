@@ -1,7 +1,0 @@
-{
-  "name": "pcreservation",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "react-vite"
-}
